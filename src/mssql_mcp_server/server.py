@@ -122,7 +122,8 @@ def is_select_query(query: str) -> bool:
     
     # Get the first non-empty word after stripping whitespace
     first_word = query_cleaned.strip().split()[0] if query_cleaned.strip() else ""
-    return first_word.upper() == "SELECT"
+    # WITH = CTE (Common Table Expression), always followed by SELECT in read-only context
+    return first_word.upper() in ("SELECT", "WITH")
 
 # Initialize server
 app = Server("mssql_mcp_server")
