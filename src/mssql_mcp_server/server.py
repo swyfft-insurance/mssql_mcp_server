@@ -4,8 +4,7 @@ import os
 import re
 import pymssql
 from mcp.server import Server
-from mcp.types import Resource, Tool, TextContent
-from pydantic import AnyUrl
+from mcp.types import Tool, TextContent
 
 # Configure logging
 logging.basicConfig(
@@ -128,70 +127,73 @@ def is_select_query(query: str) -> bool:
 # Initialize server
 app = Server("mssql_mcp_server")
 
-@app.list_resources()
-async def list_resources() -> list[Resource]:
-    """List SQL Server tables as resources."""
-    config = get_db_config()
-    try:
-        conn = pymssql.connect(**config)
-        cursor = conn.cursor()
-        # Query to get user tables from the current database
-        cursor.execute("""
-            SELECT TABLE_NAME 
-            FROM INFORMATION_SCHEMA.TABLES 
-            WHERE TABLE_TYPE = 'BASE TABLE'
-        """)
-        tables = cursor.fetchall()
-        logger.info(f"Found tables: {tables}")
-        
-        resources = []
-        for table in tables:
-            resources.append(
-                Resource(
-                    uri=f"mssql://{table[0]}/data",
-                    name=f"Table: {table[0]}",
-                    mimeType="text/plain",
-                    description=f"Data in table: {table[0]}"
-                )
-            )
-        cursor.close()
-        conn.close()
-        return resources
-    except Exception as e:
-        logger.error(f"Failed to list resources: {str(e)}")
-        return []
-
-@app.read_resource()
-async def read_resource(uri: AnyUrl) -> str:
-    """Read table contents."""
-    config = get_db_config()
-    uri_str = str(uri)
-    logger.info(f"Reading resource: {uri_str}")
-    
-    if not uri_str.startswith("mssql://"):
-        raise ValueError(f"Invalid URI scheme: {uri_str}")
-        
-    parts = uri_str[8:].split('/')
-    table = parts[0]
-    
-    try:
-        # Validate table name to prevent SQL injection
-        safe_table = validate_table_name(table)
-        
-        conn = pymssql.connect(**config)
-        cursor = conn.cursor()
-        # Use TOP 100 for MSSQL (equivalent to LIMIT in MySQL)
-        cursor.execute(f"SELECT TOP 100 * FROM {safe_table}")
-        columns = [desc[0] for desc in cursor.description]
-        rows = cursor.fetchall()
-        result = [",".join(map(str, row)) for row in rows]
-        cursor.close()
-        conn.close()
-        return "\n".join([",".join(columns)] + result)
-                
-    except Exception as e:
-        logger.error(f"Database error reading resource {uri}: {str(e)}")
-        raise RuntimeError(f"Database error: {str(e)}")
+# 2026-02-12: Removed list_resources and read_resource handlers.
+# They queried INFORMATION_SCHEMA.TABLES at startup, which timed out on
+# SwyfftAnalyticsCentral (9,759 tables) and blocked tools/list from responding,
+# causing Claude Code to register zero tools for this server.
+# Uncomment below (and re-add imports: Resource from mcp.types, AnyUrl from pydantic)
+# if resource browsing is needed in the future.
+#
+# @app.list_resources()
+# async def list_resources() -> list[Resource]:
+#     """List SQL Server tables as resources."""
+#     config = get_db_config()
+#     try:
+#         conn = pymssql.connect(**config)
+#         cursor = conn.cursor()
+#         cursor.execute("""
+#             SELECT TABLE_NAME
+#             FROM INFORMATION_SCHEMA.TABLES
+#             WHERE TABLE_TYPE = 'BASE TABLE'
+#         """)
+#         tables = cursor.fetchall()
+#         logger.info(f"Found tables: {tables}")
+#
+#         resources = []
+#         for table in tables:
+#             resources.append(
+#                 Resource(
+#                     uri=f"mssql://{table[0]}/data",
+#                     name=f"Table: {table[0]}",
+#                     mimeType="text/plain",
+#                     description=f"Data in table: {table[0]}"
+#                 )
+#             )
+#         cursor.close()
+#         conn.close()
+#         return resources
+#     except Exception as e:
+#         logger.error(f"Failed to list resources: {str(e)}")
+#         return []
+#
+# @app.read_resource()
+# async def read_resource(uri: AnyUrl) -> str:
+#     """Read table contents."""
+#     config = get_db_config()
+#     uri_str = str(uri)
+#     logger.info(f"Reading resource: {uri_str}")
+#
+#     if not uri_str.startswith("mssql://"):
+#         raise ValueError(f"Invalid URI scheme: {uri_str}")
+#
+#     parts = uri_str[8:].split('/')
+#     table = parts[0]
+#
+#     try:
+#         safe_table = validate_table_name(table)
+#         conn = pymssql.connect(**config)
+#         cursor = conn.cursor()
+#         cursor.execute(f"SELECT TOP 100 * FROM {safe_table}")
+#         columns = [desc[0] for desc in cursor.description]
+#         rows = cursor.fetchall()
+#         result = [",".join(map(str, row)) for row in rows]
+#         cursor.close()
+#         conn.close()
+#         return "\n".join([",".join(columns)] + result)
+#
+#     except Exception as e:
+#         logger.error(f"Database error reading resource {uri}: {str(e)}")
+#         raise RuntimeError(f"Database error: {str(e)}")
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
