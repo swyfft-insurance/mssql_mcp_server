@@ -4,7 +4,6 @@
 import sys
 import subprocess
 import argparse
-from pathlib import Path
 
 def run_command(cmd, description):
     """Run a command and handle output."""

@@ -1,8 +1,8 @@
 """Test error handling, resilience, and recovery scenarios."""
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, PropertyMock
-from mssql_mcp_server.server import app, get_db_config
+from unittest.mock import Mock, patch
+from mssql_mcp_server.server import app
 import pymssql
 
 
@@ -282,7 +282,7 @@ class TestMemoryAndResourceManagement:
                 'MSSQL_PASSWORD': 'test',
                 'MSSQL_DATABASE': 'testdb'
             }):
-                result = await app.call_tool("execute_sql", {"query": "SELECT * FROM users"})
+                await app.call_tool("execute_sql", {"query": "SELECT * FROM users"})
                 
                 # Cursor should be closed despite error
                 mock_cursor.close.assert_called()

@@ -3,7 +3,6 @@ import pytest
 import asyncio
 import time
 from unittest.mock import Mock, patch
-from concurrent.futures import ThreadPoolExecutor
 import gc
 import psutil
 import os

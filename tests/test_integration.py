@@ -1,10 +1,8 @@
 """Integration tests for MCP protocol communication and end-to-end functionality."""
 import pytest
 import asyncio
-import json
 from unittest.mock import Mock, patch, AsyncMock
-from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Resource, Tool
+from mcp.types import TextContent, Resource
 from mssql_mcp_server.server import app
 
 
@@ -24,8 +22,8 @@ class TestMCPProtocolIntegration:
     async def test_full_mcp_lifecycle(self):
         """Test complete MCP server lifecycle from init to shutdown."""
         # Mock the stdio streams
-        mock_read_stream = AsyncMock()
-        mock_write_stream = AsyncMock()
+        AsyncMock()
+        AsyncMock()
         
         # Mock database connection
         mock_conn = Mock()
@@ -166,7 +164,7 @@ class TestDatabaseIntegration:
                 
                 try:
                     await app.call_tool("execute_sql", {"query": "SELECT * FROM users"})
-                except:
+                except Exception:
                     pass
                 
                 # Connection should still be closed

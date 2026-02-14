@@ -1,7 +1,7 @@
 """Security tests for SQL injection prevention and safe query handling."""
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from mssql_mcp_server.server import validate_table_name, read_resource, call_tool
+from unittest.mock import Mock, patch
+from mssql_mcp_server.server import read_resource, call_tool
 from pydantic import AnyUrl
 from mcp.types import TextContent
 
@@ -47,7 +47,7 @@ class TestSQLInjectionPrevention:
                 mock_cursor.description = [('id',), ('name',)]
                 mock_cursor.fetchall.return_value = [(1, 'John'), (2, 'Jane')]
                 
-                result = await read_resource(uri)
+                await read_resource(uri)
                 
                 # Verify the query was escaped properly
                 executed_query = mock_cursor.execute.call_args[0][0]
@@ -155,7 +155,7 @@ class TestResourceAccessControl:
                 
                 # Verify system tables are filtered out (if implemented)
                 # Currently the query uses INFORMATION_SCHEMA which should only return user tables
-                resource_names = [r.name for r in resources]
+                [r.name for r in resources]
                 assert len(resources) == 4  # All tables are returned currently
     
     @pytest.mark.asyncio 
