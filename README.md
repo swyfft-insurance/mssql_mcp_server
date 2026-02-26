@@ -51,26 +51,28 @@ For Windows Authentication, set `MSSQL_WINDOWS_AUTH=true` and omit `MSSQL_USER`/
 
 ### 4. Add to Claude Code
 
-Add the server to your project's `.claude/settings.json` (shared) or `.claude/settings.local.json` (personal):
+Add the server to your project's `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "mssql": {
-      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/python",
-      "args": ["-m", "mssql_mcp_server"],
+      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
+      "args": [],
       "env": {
-        "MSSQL_SERVER": "your-server.example.com",
-        "MSSQL_DATABASE": "YourDatabase",
-        "MSSQL_USER": "your_username",
-        "MSSQL_PASSWORD": "your_password"
+        "MSSQL_SERVER": "${SWYFFT_MSSQL_SERVER}",
+        "MSSQL_DATABASE": "${SWYFFT_MSSQL_DATABASE}",
+        "MSSQL_USER": "${SWYFFT_MSSQL_USER}",
+        "MSSQL_PASSWORD": "${SWYFFT_MSSQL_PASSWORD}"
       }
     }
   }
 }
 ```
 
-Use the absolute path to the venv's Python binary so Claude Code can find it regardless of working directory.
+The `${VAR}` syntax references environment variables from your shell, so credentials stay out of the file. Export them in your `.bashrc`/`.zshrc` or `.env`.
+
+Use the absolute path to the venv's entry point so Claude Code can find it regardless of working directory.
 
 ### 5. Add to Claude Desktop (alternative)
 
@@ -80,8 +82,8 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "mssql": {
-      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/python",
-      "args": ["-m", "mssql_mcp_server"],
+      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
+      "args": [],
       "env": {
         "MSSQL_SERVER": "your-server.example.com",
         "MSSQL_DATABASE": "YourDatabase",
@@ -111,7 +113,7 @@ Start a new Claude Code session from any directory. You should see the `mssql` s
 
 ## Security notes
 
-- Store credentials in `.env` or `settings.local.json` (both gitignored), not in shared settings
+- Use `${VAR}` env var references in `.mcp.json` so credentials stay in your shell environment, not in the repo
 - Use a read-only SQL account when possible
 - The server does not restrict query types — access control is your responsibility
 
