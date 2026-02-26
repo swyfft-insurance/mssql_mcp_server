@@ -79,11 +79,13 @@ export SWYFFT_MSSQL_USER=your_username
 export SWYFFT_MSSQL_PASSWORD=your_password
 ```
 
-Then source it from your `.bashrc`:
+Add to your `~/.bashrc` (or `~/.zshrc`):
 
 ```bash
 [ -f ~/.swyfft_credentials ] && source ~/.swyfft_credentials
 ```
+
+Then reload: `source ~/.bashrc`
 
 Use the absolute path to the venv's entry point so Claude Code can find it regardless of working directory.
 
