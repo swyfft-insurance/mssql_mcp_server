@@ -51,13 +51,15 @@ For Windows Authentication, set `MSSQL_WINDOWS_AUTH=true` and omit `MSSQL_USER`/
 
 ### 4. Add to Claude Code
 
-Add the server to your project's `.mcp.json`:
+If you're using the [SwyfftAnalytics-claude-code](https://github.com/swyfft-insurance/SwyfftAnalytics-claude-code) parent repo, run `python3 setup.py` — it generates `.mcp.json` from the template with paths resolved automatically.
+
+If you cloned this repo standalone, add to your project's `.mcp.json` manually:
 
 ```json
 {
   "mcpServers": {
     "mssql": {
-      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
+      "command": "/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
       "args": [],
       "env": {
         "MSSQL_SERVER": "${SWYFFT_MSSQL_SERVER}",
@@ -69,6 +71,8 @@ Add the server to your project's `.mcp.json`:
   }
 }
 ```
+
+Replace `/path/to/mssql_mcp_server` with the absolute path to your clone.
 
 The `${VAR}` syntax references environment variables from your shell, so credentials stay out of the file. Add your exports to `~/.swyfft_credentials`:
 
@@ -87,17 +91,15 @@ Add to your `~/.bashrc` (or `~/.zshrc`):
 
 Then reload: `source ~/.bashrc`
 
-Use the absolute path to the venv's entry point so Claude Code can find it regardless of working directory.
-
 ### 5. Add to Claude Desktop (alternative)
 
-Add to `claude_desktop_config.json`:
+Add to `claude_desktop_config.json`, replacing the path with your clone location:
 
 ```json
 {
   "mcpServers": {
     "mssql": {
-      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
+      "command": "/path/to/mssql_mcp_server/.venv/bin/mssql_mcp_server",
       "args": [],
       "env": {
         "MSSQL_SERVER": "your-server.example.com",
