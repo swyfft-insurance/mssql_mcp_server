@@ -70,7 +70,20 @@ Add the server to your project's `.mcp.json`:
 }
 ```
 
-The `${VAR}` syntax references environment variables from your shell, so credentials stay out of the file. Export them in your `.bashrc`/`.zshrc` or `.env`.
+The `${VAR}` syntax references environment variables from your shell, so credentials stay out of the file. Add your exports to `~/.swyfft_credentials`:
+
+```bash
+export SWYFFT_MSSQL_SERVER=your-server.example.com
+export SWYFFT_MSSQL_DATABASE=YourDatabase
+export SWYFFT_MSSQL_USER=your_username
+export SWYFFT_MSSQL_PASSWORD=your_password
+```
+
+Then source it from your `.bashrc`:
+
+```bash
+[ -f ~/.swyfft_credentials ] && source ~/.swyfft_credentials
+```
 
 Use the absolute path to the venv's entry point so Claude Code can find it regardless of working directory.
 
@@ -113,7 +126,7 @@ Start a new Claude Code session from any directory. You should see the `mssql` s
 
 ## Security notes
 
-- Use `${VAR}` env var references in `.mcp.json` so credentials stay in your shell environment, not in the repo
+- Store credentials in `~/.swyfft_credentials` (never committed) and reference them via `${VAR}` in `.mcp.json`
 - Use a read-only SQL account when possible
 - The server does not restrict query types — access control is your responsibility
 
