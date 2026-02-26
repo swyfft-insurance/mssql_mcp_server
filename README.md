@@ -1,37 +1,67 @@
-# Microsoft SQL Server MCP Server
+# MSSQL MCP Server
 
-[![PyPI](https://img.shields.io/pypi/v/microsoft_sql_server_mcp)](https://pypi.org/project/microsoft_sql_server_mcp/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for querying Microsoft SQL Server databases from Claude Code or Claude Desktop.
 
-<a href="https://glama.ai/mcp/servers/29cpe19k30">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/29cpe19k30/badge" alt="Microsoft SQL Server MCP server" />
-</a>
+Forked from [RichardHan/mssql_mcp_server](https://github.com/RichardHan/mssql_mcp_server) with Swyfft-specific fixes:
+- CTE (`WITH ... SELECT`) queries recognized as read-only SELECT statements
+- Resource handler disabled to prevent timeout on large databases (9,000+ tables)
+- Ruff linting cleanup
 
-A Model Context Protocol (MCP) server for secure SQL Server database access through Claude Desktop.
+## Setup
 
-## Features
+### 1. Clone the repo
 
-- 🔍 List database tables
-- 📊 Execute SQL queries (SELECT, INSERT, UPDATE, DELETE)
-- 🔐 Multiple authentication methods (SQL, Windows, Azure AD)
-- 🏢 LocalDB and Azure SQL support
-- 🔌 Custom port configuration
+```bash
+git clone git@github.com:swyfft-insurance/mssql_mcp_server.git
+cd mssql_mcp_server
+```
 
-## Quick Start
+### 2. Create a virtual environment and install
 
-### Install with Claude Desktop
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
 
-Add to your `claude_desktop_config.json`:
+On Linux, you may need the FreeTDS development library first:
+
+```bash
+sudo apt install freetds-dev
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file (gitignored) or export directly:
+
+```bash
+# Required
+MSSQL_SERVER=your-server.example.com
+MSSQL_DATABASE=YourDatabase
+MSSQL_USER=your_username
+MSSQL_PASSWORD=your_password
+
+# Optional
+MSSQL_PORT=1433              # Default: 1433
+MSSQL_ENCRYPT=true           # Force encryption (auto for Azure)
+MSSQL_WINDOWS_AUTH=true      # Use Windows auth instead of SQL auth
+```
+
+For Windows Authentication, set `MSSQL_WINDOWS_AUTH=true` and omit `MSSQL_USER`/`MSSQL_PASSWORD`.
+
+### 4. Add to Claude Code
+
+Add the server to your project's `.claude/settings.json` (shared) or `.claude/settings.local.json` (personal):
 
 ```json
 {
   "mcpServers": {
     "mssql": {
-      "command": "uvx",
-      "args": ["microsoft_sql_server_mcp"],
+      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/python",
+      "args": ["-m", "mssql_mcp_server"],
       "env": {
-        "MSSQL_SERVER": "localhost",
-        "MSSQL_DATABASE": "your_database",
+        "MSSQL_SERVER": "your-server.example.com",
+        "MSSQL_DATABASE": "YourDatabase",
         "MSSQL_USER": "your_username",
         "MSSQL_PASSWORD": "your_password"
       }
@@ -40,71 +70,59 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-## Configuration
+Use the absolute path to the venv's Python binary so Claude Code can find it regardless of working directory.
 
-### Basic SQL Authentication
-```bash
-MSSQL_SERVER=localhost          # Required
-MSSQL_DATABASE=your_database    # Required
-MSSQL_USER=your_username        # Required for SQL auth
-MSSQL_PASSWORD=your_password    # Required for SQL auth
-```
+### 5. Add to Claude Desktop (alternative)
 
-### Windows Authentication
-```bash
-MSSQL_SERVER=localhost
-MSSQL_DATABASE=your_database
-MSSQL_WINDOWS_AUTH=true         # Use Windows credentials
-```
+Add to `claude_desktop_config.json`:
 
-### Azure SQL Database
-```bash
-MSSQL_SERVER=your-server.database.windows.net
-MSSQL_DATABASE=your_database
-MSSQL_USER=your_username
-MSSQL_PASSWORD=your_password
-# Encryption is automatic for Azure
-```
-
-### Optional Settings
-```bash
-MSSQL_PORT=1433                 # Custom port (default: 1433)
-MSSQL_ENCRYPT=true              # Force encryption
-```
-
-## Alternative Installation Methods
-
-### Using pip
-```bash
-pip install microsoft_sql_server_mcp
-```
-
-Then in `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
     "mssql": {
-      "command": "python",
+      "command": "/absolute/path/to/mssql_mcp_server/.venv/bin/python",
       "args": ["-m", "mssql_mcp_server"],
-      "env": { ... }
+      "env": {
+        "MSSQL_SERVER": "your-server.example.com",
+        "MSSQL_DATABASE": "YourDatabase",
+        "MSSQL_USER": "your_username",
+        "MSSQL_PASSWORD": "your_password"
+      }
     }
   }
 }
 ```
 
-### Development
-```bash
-git clone https://github.com/RichardHan/mssql_mcp_server.git
-cd mssql_mcp_server
-pip install -e .
+## Tools
+
+The server exposes a single tool:
+
+| Tool | Description |
+|------|-------------|
+| `execute_sql` | Execute a SQL query against the configured database. SELECT and CTE (`WITH`) queries return results as CSV. Non-SELECT queries return affected row count. |
+
+## Verify it works
+
+Start a new Claude Code session from any directory. You should see the `mssql` server in the status bar. Run a test query:
+
+```
+> run: SELECT TOP 1 name FROM sys.tables
 ```
 
-## Security
+## Security notes
 
-- Create a dedicated SQL user with minimal permissions
-- Never use admin/sa accounts
-- Use Windows Authentication when possible
-- Enable encryption for sensitive data
+- Store credentials in `.env` or `settings.local.json` (both gitignored), not in shared settings
+- Use a read-only SQL account when possible
+- The server does not restrict query types — access control is your responsibility
+
+## Development
+
+```bash
+make install-dev   # Install with dev dependencies
+make test          # Run tests
+make lint          # Check formatting
+make format        # Auto-format
+```
 
 ## License
 

@@ -1,4 +1,4 @@
-.PHONY: venv install install-dev test lint format clean run docker-build docker-up docker-down docker-test docker-exec
+.PHONY: venv install install-dev test lint format clean run
 
 PYTHON := python3
 VENV := venv
@@ -34,32 +34,3 @@ clean:
 
 run: install
 	$(BIN)/python -m mssql_mcp_server
-
-# Docker commands
-docker-build:
-	docker-compose build
-
-docker-up:
-	docker-compose up -d
-
-docker-down:
-	docker-compose down
-
-docker-test:
-	docker-compose exec mcp_server pytest -v
-
-docker-exec:
-	docker-compose exec mcp_server bash
-
-# Test MSSQL connection
-test-connection:
-	$(PYTHON) test_connection.py --server $${MSSQL_SERVER:-localhost} --port $${HOST_SQL_PORT:-1434} --user $${MSSQL_USER:-sa} --password $${MSSQL_PASSWORD:-StrongPassword123!} --database $${MSSQL_DATABASE:-master}
-
-# Set environment variables for testing
-test-env:
-	@echo "Export your database credentials before running tests:"
-	@echo "export MSSQL_SERVER=your_server"
-	@echo "export MSSQL_PORT=1433"
-	@echo "export MSSQL_USER=your_username"
-	@echo "export MSSQL_PASSWORD=your_password"
-	@echo "export MSSQL_DATABASE=your_database"
