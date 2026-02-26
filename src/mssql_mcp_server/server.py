@@ -204,13 +204,29 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name=command,
-            description="Execute an SQL query on the SQL Server",
+            description=(
+                "Execute a SQL query against SwyfftAnalyticsCentral (SQL Server). "
+                "Schemas: dw.* (data warehouse facts/dims — DimPolicy, DimQuote, DimProducer, "
+                "DimCompanyLine, FactPremium, FactLoss), dataiku.* (ETL outputs), "
+                "core/ims/pif.* (synonyms to SwyfftAnalyticsData). "
+                "Returns CSV text: header row, then one comma-separated row per result. "
+                "Read-only queries only (SELECT or WITH/CTE). "
+                "Date keys are YYYYMMDD integers (e.g. 20250115). "
+                "Use TOP 100 when exploring unfamiliar tables. "
+                "Example: SELECT TOP 100 pol.PolicyNumber, pol.PolicyStatus "
+                "FROM dw.DimPolicy pol WHERE pol.EK_Date_PolicyBound >= 20250101"
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The SQL query to execute"
+                        "description": (
+                            "SQL query to execute. Use schema-qualified table names "
+                            "(e.g. dw.DimPolicy, dataiku.producerreporting_final). "
+                            "CTEs (WITH ... AS) are supported. "
+                            "Non-SELECT statements will be committed — use with caution."
+                        )
                     }
                 },
                 "required": ["query"]
