@@ -96,6 +96,33 @@ def get_db_config():
     
     return config
 
+def get_blocked_databases():
+    """Get list of blocked database names from environment variable.
+    MSSQL_BLOCKED_DATABASES is a comma-separated list of database names
+    that queries are not allowed to reference."""
+    blocked = os.getenv("MSSQL_BLOCKED_DATABASES", "")
+    if not blocked:
+        return []
+    return [db.strip() for db in blocked.split(",") if db.strip()]
+
+def check_blocked_databases(query: str, blocked_databases: list[str]) -> str | None:
+    """Check if a query references any blocked database.
+    Returns the blocked database name if found, None otherwise.
+    Checks for three-part names (db.schema.table) and USE statements."""
+    if not blocked_databases:
+        return None
+    # Remove comments before checking
+    query_cleaned = re.sub(r'/\*.*?\*/', '', query, flags=re.DOTALL)
+    query_cleaned = re.sub(r'--[^\n]*', '', query_cleaned)
+    for db in blocked_databases:
+        # Check for USE <database>
+        if re.search(rf'\bUSE\s+\[?{re.escape(db)}\]?\b', query_cleaned, re.IGNORECASE):
+            return db
+        # Check for three-part names: database.schema.table or [database].schema.table
+        if re.search(rf'\b\[?{re.escape(db)}\]?\s*\.', query_cleaned, re.IGNORECASE):
+            return db
+    return None
+
 def get_command():
     """Get the command to execute SQL queries."""
     return os.getenv("MSSQL_COMMAND", "execute_sql")
@@ -247,7 +274,12 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     query = arguments.get("query")
     if not query:
         raise ValueError("Query is required")
-    
+
+    blocked_databases = get_blocked_databases()
+    blocked_db = check_blocked_databases(query, blocked_databases)
+    if blocked_db:
+        return [TextContent(type="text", text=f"Error: Access to database '{blocked_db}' is blocked. Blocked databases: {', '.join(blocked_databases)}")]
+
     try:
         conn = pymssql.connect(**config)
         cursor = conn.cursor()
